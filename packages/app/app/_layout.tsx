@@ -69,6 +69,14 @@ export default function RootLayout() {
     deleteOnboardingFlag();
   }, []);
 
+  // useEffect(() => {
+  //   const deleteall = async () => {
+  //           await SecureStore.deleteItemAsync("userToken");
+  //           await SecureStore.deleteItemAsync("hasOnboarded");
+  //   };
+  //   deleteall();
+  // }, []);
+
   if (!loaded || checking) {
     return (
       <View

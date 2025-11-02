@@ -14,7 +14,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Votre position est utilisée pour trouver des animaux proches."
+      }
     },
     "android": {
       "adaptiveIcon": {

@@ -1,38 +1,62 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
+import { User } from "../../../shared/generated/graphql-types";
+
+const ME = gql`
+  query Me {
+    me {
+      id
+      email
+      location {
+        latitude
+        longitude
+      }
+    }
+  }
+`;
 
 export default function ProfileScreen() {
   const router = useRouter();
 
+  const { data, loading, error } = useQuery<{ me: User }>(ME);
+
+  if (loading) return <Text>Loading...</Text>;
+  if (error) return <Text>Error: {error.message}</Text>;
+
+  const user = data;
+
   const handleLogout = async () => {
-    Alert.alert(
-      "Déconnexion",
-      "Voulez-vous vraiment vous déconnecter ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Oui, me déconnecter",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await SecureStore.deleteItemAsync("userToken");
-              await SecureStore.deleteItemAsync("hasOnboarded");
-              router.replace("/onboarding");
-            } catch (error) {
-              console.error("Erreur lors du logout :", error);
-            }
-          },
+    Alert.alert("Déconnexion", "Voulez-vous vraiment vous déconnecter ?", [
+      { text: "Annuler", style: "cancel" },
+      {
+        text: "Oui, me déconnecter",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await SecureStore.deleteItemAsync("userToken");
+            await SecureStore.deleteItemAsync("hasOnboarded");
+            router.replace("/onboarding");
+          } catch (error) {
+            console.error("Erreur lors du logout :", error);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Mon Profil 👤</Text>
-
+      <Text>Email: {user?.me.email}</Text>
+      {user?.me.location && (
+        <Text>
+          Location: Lat {user.me.location.latitude}, Lon {user.me.location.longitude}
+        </Text>
+      )}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Se déconnecter</Text>
       </TouchableOpacity>

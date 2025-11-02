@@ -31,8 +31,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: "Accueil",
+          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color} size={size} />,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>
@@ -46,6 +46,15 @@ export default function TabLayout() {
                 )}
               </Pressable>
             </Link>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="animals"
+        options={{
+          title: "Animaux",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="paw-outline" color={color} size={size} />
           ),
         }}
       />

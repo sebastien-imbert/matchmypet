@@ -172,7 +172,7 @@ export default function EditAnimalScreen() {
 
       <Text>Race (optionnel)</Text>
       <TextInput
-        value={breed}
+        value={breed || ""}
         onChangeText={setBreed}
         placeholder="Ex: Labrador"
         style={styles.input}
@@ -180,7 +180,7 @@ export default function EditAnimalScreen() {
 
       <Text>Description (optionnel)</Text>
       <TextInput
-        value={description}
+        value={description || ""}
         onChangeText={setDescription}
         placeholder="Quelques mots sur l’animal"
         multiline

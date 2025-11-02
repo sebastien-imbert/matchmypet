@@ -2,7 +2,10 @@ import { View, Text, Button, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { gql } from "@apollo/client";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { Animal } from "../../../../shared/generated/graphql-types";
+import {
+  Animal,
+  MutationDeleteAnimalArgs,
+} from "../../../../shared/generated/graphql-types";
 
 const GET_ANIMAL = gql`
   query GetAnimal($id: ID!) {
@@ -21,9 +24,25 @@ const GET_ANIMAL = gql`
 `;
 
 const DELETE_ANIMAL = gql`
-  mutation DeleteAnimal($id: ID!) {
-    deleteAnimal(id: $id) {
+  mutation DeleteAnimal($input: DeleteAnimalInput!) {
+    deleteAnimal(input: $input) {
       id
+      name
+      sex
+      age
+      species
+      breed
+      description
+      breedingStatus
+      owner {
+        id
+        email
+        location {
+          latitude
+          longitude
+        }
+      }
+      createdAt
     }
   }
 `;
@@ -36,13 +55,14 @@ export default function AnimalDetail() {
     variables: { id },
   });
 
-  const [deleteAnimal, { loading: isDeleting, error: deleteError }] = useMutation<
-    { deleteAnimal: Animal },
-    { id: string }
-  >(DELETE_ANIMAL, {
-    refetchQueries: ["MyAnimals"],
-    awaitRefetchQueries: true,
-  });
+  const [deleteAnimal, { loading: isDeleting, error: deleteError }] =
+    useMutation<{ deleteAnimal: Animal }, MutationDeleteAnimalArgs>(
+      DELETE_ANIMAL,
+      {
+        refetchQueries: ["MyAnimals"],
+        awaitRefetchQueries: true,
+      }
+    );
 
   if (loading) {
     return (
@@ -64,9 +84,9 @@ export default function AnimalDetail() {
   const animal = data.getAnimal;
 
   const handleDelete = (animalId: string) => {
-    deleteAnimal({ variables: { id: animalId } });
+    deleteAnimal({ variables: { input: { id: animalId } } });
     router.push("/(tabs)");
-  }
+  };
 
   return (
     <View style={{ padding: 20 }}>
@@ -78,8 +98,20 @@ export default function AnimalDetail() {
       <Text>Description: {animal.description}</Text>
       <Text>Statut de reproduction: {animal.breedingStatus}</Text>
       <Text>Date de création: {animal.createdAt}</Text>
-      <Button title="Supprimer" color={"red"} onPress={() => Alert.alert("Êtes-vous sûr de vouloir supprimer cet animal ?", "", [{ text: "Annuler" }, { text: "Supprimer", onPress: () => handleDelete(animal.id) }])} />
-      <Button title="Modifier" onPress={() => router.push(`/animals/${animal.id}/edit`)} />
+      <Button
+        title="Supprimer"
+        color={"red"}
+        onPress={() =>
+          Alert.alert("Êtes-vous sûr de vouloir supprimer cet animal ?", "", [
+            { text: "Annuler" },
+            { text: "Supprimer", onPress: () => handleDelete(animal.id) },
+          ])
+        }
+      />
+      <Button
+        title="Modifier"
+        onPress={() => router.push(`/animals/${animal.id}/edit`)}
+      />
     </View>
   );
 }

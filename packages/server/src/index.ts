@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -6,7 +7,6 @@ import { expressMiddleware } from "@as-integrations/express5";
 import { typeDefs } from "./schema";
 import { resolvers } from "./resolvers";
 import jwt from "jsonwebtoken";
-import 'dotenv/config';
 
 export interface Context {
   user?: { id: string };
