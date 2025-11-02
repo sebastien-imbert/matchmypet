@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // Version JS générée
+    "module": "CommonJS", // Module system pour Node
+    "lib": ["ES2020"], // Types natifs ES
+    "strict": true, // Toutes les vérifications TS strictes
+    "esModuleInterop": true, // Permet import "import x from 'x'"
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "outDir": "dist", // Dossier de sortie si compilation
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*.ts"], // Tous les fichiers TS dans src
+  "exclude": ["node_modules", "dist"]
+}

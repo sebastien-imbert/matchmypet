@@ -1,0 +1,13 @@
+{
+  "name": "matchmypet",
+  "private": true,
+  "scripts": {
+    "dev:server": "pnpm --filter server start",
+    "dev:app": "pnpm --filter app start",
+    "dev": "concurrently \"pnpm --filter server start\" \"pnpm --filter app start\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}
+

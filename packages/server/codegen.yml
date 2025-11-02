@@ -1,0 +1,12 @@
+overwrite: true
+schema: "src/schema.ts" # ton fichier schema
+generates:
+  ../shared/generated/graphql-types.ts:  # dossier shared pour réutiliser dans tout le monorepo
+    plugins:
+      - "typescript"
+      - "typescript-resolvers"
+    config:
+      contextType: "../../server/src/index#Context"
+      avoidOptionals: true
+      enumsAsTypes: true
+      maybeValue: T
