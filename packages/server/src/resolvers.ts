@@ -70,7 +70,7 @@ export const resolvers = {
 
       const token = jwt.sign(
         { id: newUser.id },
-        process.env.JWT_SECRET || "default_secret",
+        process.env.JWT_SECRET!,
         { expiresIn: "7d" }
       );
 
@@ -91,7 +91,7 @@ export const resolvers = {
 
       const token = jwt.sign(
         { id: user.id },
-        process.env.JWT_SECRET || "default_secret",
+        process.env.JWT_SECRET!,
         { expiresIn: "7d" }
       );
 

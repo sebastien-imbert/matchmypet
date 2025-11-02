@@ -6,8 +6,8 @@ import { expressMiddleware } from "@as-integrations/express5";
 import { typeDefs } from "./schema";
 import { resolvers } from "./resolvers";
 import jwt from "jsonwebtoken";
+import 'dotenv/config';
 
-// 👇 Déclare un type explicite pour le contexte
 export interface Context {
   user?: { id: string };
 }
@@ -32,7 +32,7 @@ async function start() {
           try {
             const decoded = jwt.verify(
               auth.replace("Bearer ", ""),
-              process.env.JWT_SECRET || "default_secret"
+              process.env.JWT_SECRET!
             ) as {
               id: string;
             };
