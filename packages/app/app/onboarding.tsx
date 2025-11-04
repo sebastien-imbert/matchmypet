@@ -5,15 +5,21 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  Button,
 } from "react-native";
 import Swiper from "react-native-swiper";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { KeyboardAvoidingView, Platform } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { AuthPayload, MutationSignupArgs } from "../../shared/generated/graphql-types";
+import {
+  AuthPayload,
+  MutationSignupArgs,
+  LocationInput,
+} from "../../shared/generated/graphql-types";
 import { gql } from "@apollo/client";
 import { useMutation } from "@apollo/client/react";
+import * as Location from "expo-location";
 
 export function PasswordInput({
   value,
@@ -25,7 +31,6 @@ export function PasswordInput({
   placeholder?: string;
 }) {
   const [secure, setSecure] = useState(true);
-
   return (
     <View style={{ width: "100%", position: "relative" }}>
       <TextInput
@@ -63,12 +68,16 @@ export function PasswordInput({
 }
 
 export const SIGNUP_MUTATION = gql`
-  mutation Signup($email: String!, $password: String!) {
-    signup(email: $email, password: $password) {
+  mutation Signup($input: SignupInput!) {
+    signup(input: $input) {
       token
       user {
         id
         email
+        location {
+          latitude
+          longitude
+        }
       }
     }
   }
@@ -84,14 +93,40 @@ export default function Onboarding() {
 
   const router = useRouter();
 
+  const [location, setLocation] = useState<LocationInput>({
+    latitude: 0,
+    longitude: 0,
+  });
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const getLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      setErrorMsg("Permission refusée");
+      return;
+    }
+
+    const loc = await Location.getCurrentPositionAsync({});
+    setLocation({
+      latitude: loc.coords.latitude,
+      longitude: loc.coords.longitude,
+    });
+  };
+
   const handleSignup = async () => {
     try {
+      console.log("Attempting signup with:", { email, password, location });
       const { data } = await signup({
-        variables: { email, password },
+        variables: {
+          input: {
+            email,
+            password,
+            location,
+          },
+        },
       });
 
       if (data?.signup?.token) {
-
         await SecureStore.setItemAsync("userToken", data.signup.token);
         await SecureStore.setItemAsync("hasOnboarded", "true");
         finishOnboarding();
@@ -107,19 +142,16 @@ export default function Onboarding() {
       title: "Bienvenue sur MatchMyPet! 🐾",
       description:
         "Découvrez une plateforme sécurisée pour connecter propriétaires d’animaux et faciliter les saillies de manière simple et fiable.",
-      // image: require('../assets/onboarding1.png'),
     },
     {
-      title: "Sécurité et fiabilité 🔐",
+      title: "Géolocalisation pour des résultats précis 📍",
       description:
-        "Tous les profils sont vérifiés et les informations médicales sont centralisées pour garantir des rencontres responsables et sereines.",
-      // image: require('../assets/onboarding2.png'),
+        "Pour améliorer votre expérience de recherche de saillies, nous vous recommandons d'activer la géolocalisation.",
     },
     {
       title: "Commencez dès maintenant 🚀",
       description:
         "Créez votre compte pour accéder aux profils, proposer ou rechercher des saillies et suivre toutes vos interactions en toute sécurité.",
-      // image: require('../assets/onboarding3.png'),
     },
   ];
 
@@ -144,6 +176,15 @@ export default function Onboarding() {
             {/* <Image source={slide.image} style={styles.image} /> */}
             <Text style={styles.title}>{slide.title}</Text>
             <Text style={styles.description}>{slide.description}</Text>
+            {i === 1 && (
+              <>
+                <Button
+                  title="Activer la géolocalisation"
+                  onPress={getLocation}
+                />
+                <Text>{JSON.stringify(location)}</Text>
+              </>
+            )}
 
             {i === slides.length - 1 && (
               <>

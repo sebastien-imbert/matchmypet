@@ -1,7 +1,7 @@
 import { GraphQLResolveInfo } from 'graphql';
 import { Context } from '../../server/src/index';
-export type Maybe<T> = T;
-export type InputMaybe<T> = T;
+export type Maybe<T> = T | null;
+export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
@@ -20,10 +20,10 @@ export type Scalars = {
 export type Animal = {
   __typename?: 'Animal';
   age: Scalars['Int']['output'];
-  breed: Maybe<Scalars['String']['output']>;
+  breed?: Maybe<Scalars['String']['output']>;
   breedingStatus: BreedingStatus;
   createdAt: Scalars['String']['output'];
-  description: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   owner: User;
@@ -44,9 +44,9 @@ export type BreedingStatus =
 
 export type CreateAnimalInput = {
   age: Scalars['Int']['input'];
-  breed: InputMaybe<Scalars['String']['input']>;
+  breed?: InputMaybe<Scalars['String']['input']>;
   breedingStatus: BreedingStatus;
-  description: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   sex: Sex;
   species: Species;
@@ -58,19 +58,35 @@ export type DeleteAnimalInput = {
 
 export type EditAnimalInput = {
   age: Scalars['Int']['input'];
-  breed: InputMaybe<Scalars['String']['input']>;
+  breed?: InputMaybe<Scalars['String']['input']>;
   breedingStatus: BreedingStatus;
-  description: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   name: Scalars['String']['input'];
   sex: Sex;
   species: Species;
 };
 
+export type Location = {
+  __typename?: 'Location';
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
+};
+
+export type LocationInput = {
+  latitude: Scalars['Float']['input'];
+  longitude: Scalars['Float']['input'];
+};
+
+export type LoginInput = {
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   createAnimal: Animal;
-  deleteAnimal: Scalars['Boolean']['output'];
+  deleteAnimal: Animal;
   editAnimal: Animal;
   login: AuthPayload;
   signup: AuthPayload;
@@ -83,7 +99,7 @@ export type MutationCreateAnimalArgs = {
 
 
 export type MutationDeleteAnimalArgs = {
-  id: Scalars['ID']['input'];
+  input: DeleteAnimalInput;
 };
 
 
@@ -93,23 +109,20 @@ export type MutationEditAnimalArgs = {
 
 
 export type MutationLoginArgs = {
-  email: Scalars['String']['input'];
-  password: Scalars['String']['input'];
+  input: LoginInput;
 };
 
 
 export type MutationSignupArgs = {
-  email: Scalars['String']['input'];
-  password: Scalars['String']['input'];
+  input: SignupInput;
 };
 
 export type Query = {
   __typename?: 'Query';
   availableAnimals: Array<Animal>;
-  getAnimal: Maybe<Animal>;
-  hello: Scalars['String']['output'];
+  getAnimal?: Maybe<Animal>;
   lookingAnimals: Array<Animal>;
-  me: Maybe<User>;
+  me?: Maybe<User>;
   myAnimals: Array<Animal>;
 };
 
@@ -122,6 +135,12 @@ export type Sex =
   | 'FEMALE'
   | 'MALE';
 
+export type SignupInput = {
+  email: Scalars['String']['input'];
+  location?: InputMaybe<LocationInput>;
+  password: Scalars['String']['input'];
+};
+
 export type Species =
   | 'CHAT'
   | 'CHIEN';
@@ -130,6 +149,7 @@ export type User = {
   __typename?: 'User';
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  location?: Maybe<Location>;
 };
 
 
@@ -212,11 +232,16 @@ export type ResolversTypes = {
   CreateAnimalInput: CreateAnimalInput;
   DeleteAnimalInput: DeleteAnimalInput;
   EditAnimalInput: EditAnimalInput;
+  Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
+  Location: ResolverTypeWrapper<Location>;
+  LocationInput: LocationInput;
+  LoginInput: LoginInput;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Sex: Sex;
+  SignupInput: SignupInput;
   Species: Species;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   User: ResolverTypeWrapper<User>;
@@ -230,59 +255,70 @@ export type ResolversParentTypes = {
   CreateAnimalInput: CreateAnimalInput;
   DeleteAnimalInput: DeleteAnimalInput;
   EditAnimalInput: EditAnimalInput;
+  Float: Scalars['Float']['output'];
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
+  Location: Location;
+  LocationInput: LocationInput;
+  LoginInput: LoginInput;
   Mutation: Record<PropertyKey, never>;
   Query: Record<PropertyKey, never>;
+  SignupInput: SignupInput;
   String: Scalars['String']['output'];
   User: User;
 };
 
 export type AnimalResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Animal'] = ResolversParentTypes['Animal']> = {
-  age: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  breed: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  breedingStatus: Resolver<ResolversTypes['BreedingStatus'], ParentType, ContextType>;
-  createdAt: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  description: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  name: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  owner: Resolver<ResolversTypes['User'], ParentType, ContextType>;
-  sex: Resolver<ResolversTypes['Sex'], ParentType, ContextType>;
-  species: Resolver<ResolversTypes['Species'], ParentType, ContextType>;
+  age?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  breed?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  breedingStatus?: Resolver<ResolversTypes['BreedingStatus'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  owner?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  sex?: Resolver<ResolversTypes['Sex'], ParentType, ContextType>;
+  species?: Resolver<ResolversTypes['Species'], ParentType, ContextType>;
 };
 
 export type AuthPayloadResolvers<ContextType = Context, ParentType extends ResolversParentTypes['AuthPayload'] = ResolversParentTypes['AuthPayload']> = {
-  token: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  user: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+};
+
+export type LocationResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Location'] = ResolversParentTypes['Location']> = {
+  latitude?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  longitude?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
 export type MutationResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
-  createAnimal: Resolver<ResolversTypes['Animal'], ParentType, ContextType, RequireFields<MutationCreateAnimalArgs, 'input'>>;
-  deleteAnimal: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationDeleteAnimalArgs, 'id'>>;
-  editAnimal: Resolver<ResolversTypes['Animal'], ParentType, ContextType, RequireFields<MutationEditAnimalArgs, 'input'>>;
-  login: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<MutationLoginArgs, 'email' | 'password'>>;
-  signup: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<MutationSignupArgs, 'email' | 'password'>>;
+  createAnimal?: Resolver<ResolversTypes['Animal'], ParentType, ContextType, RequireFields<MutationCreateAnimalArgs, 'input'>>;
+  deleteAnimal?: Resolver<ResolversTypes['Animal'], ParentType, ContextType, RequireFields<MutationDeleteAnimalArgs, 'input'>>;
+  editAnimal?: Resolver<ResolversTypes['Animal'], ParentType, ContextType, RequireFields<MutationEditAnimalArgs, 'input'>>;
+  login?: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<MutationLoginArgs, 'input'>>;
+  signup?: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<MutationSignupArgs, 'input'>>;
 };
 
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  availableAnimals: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
-  getAnimal: Resolver<Maybe<ResolversTypes['Animal']>, ParentType, ContextType, RequireFields<QueryGetAnimalArgs, 'id'>>;
-  hello: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  lookingAnimals: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
-  me: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
-  myAnimals: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
+  availableAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
+  getAnimal?: Resolver<Maybe<ResolversTypes['Animal']>, ParentType, ContextType, RequireFields<QueryGetAnimalArgs, 'id'>>;
+  lookingAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
+  me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  myAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
 };
 
 export type UserResolvers<ContextType = Context, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
-  email: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  location?: Resolver<Maybe<ResolversTypes['Location']>, ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = Context> = {
-  Animal: AnimalResolvers<ContextType>;
-  AuthPayload: AuthPayloadResolvers<ContextType>;
-  Mutation: MutationResolvers<ContextType>;
-  Query: QueryResolvers<ContextType>;
-  User: UserResolvers<ContextType>;
+  Animal?: AnimalResolvers<ContextType>;
+  AuthPayload?: AuthPayloadResolvers<ContextType>;
+  Location?: LocationResolvers<ContextType>;
+  Mutation?: MutationResolvers<ContextType>;
+  Query?: QueryResolvers<ContextType>;
+  User?: UserResolvers<ContextType>;
 };
 

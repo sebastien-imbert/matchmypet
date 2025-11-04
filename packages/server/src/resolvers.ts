@@ -1,52 +1,163 @@
-console.log("Resolvers module loaded");
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
 import {
   Animal,
   AuthPayload,
-  BreedingStatus,
   MutationCreateAnimalArgs,
   MutationEditAnimalArgs,
   MutationLoginArgs,
-  Sex,
   MutationSignupArgs,
   User,
+  MutationDeleteAnimalArgs,
 } from "../../shared/generated/graphql-types";
 import { Context } from "./index";
-import { users, animals } from "./db";
-import { sendWelcomeEmail } from "./services/mailer";
+// import { sendWelcomeEmail } from "./libs/mailer";
+import { createJWT, hashPassword, verifyPassword } from "./utils/auth";
+import { prisma } from "./prisma/client";
 
 export const resolvers = {
   Query: {
-    hello: (): string => "Hello world!",
-
-    me: (_: unknown, __: unknown, context: Context): User | null => {
+    me: async (
+      _: unknown,
+      __: unknown,
+      context: Context
+    ): Promise<User | null> => {
       if (!context.user) throw new Error("Not authenticated");
-      return users.find((u) => u.id === context.user?.id) || null;
+
+      const me = await prisma.user.findUnique({
+        where: { id: context.user.id },
+        include: { location: true },
+      });
+
+      return me;
     },
 
-    myAnimals: (_: unknown, __: unknown, context: Context): Animal[] => {
+    myAnimals: async (
+      _: unknown,
+      __: unknown,
+      context: Context
+    ): Promise<Animal[]> => {
       if (!context.user) throw new Error("Not authenticated");
-      return animals.filter((a) => a.owner.id === context.user!.id);
+      const ownerAnimals = await prisma.animal.findMany({
+        where: { ownerId: context.user.id },
+        include: { owner: { include: { location: true } } },
+      });
+
+      const mappedAnimals: Animal[] = ownerAnimals.map((prismaAnimal) => ({
+        id: prismaAnimal.id,
+        name: prismaAnimal.name,
+        species: prismaAnimal.species,
+        breed: prismaAnimal.breed,
+        age: prismaAnimal.age,
+        description: prismaAnimal.description,
+        sex: prismaAnimal.sex,
+        breedingStatus: prismaAnimal.breedingStatus,
+        owner: {
+          id: prismaAnimal.owner.id,
+          email: prismaAnimal.owner.email,
+          location: prismaAnimal.owner.location
+            ? {
+                latitude: prismaAnimal.owner.location.latitude,
+                longitude: prismaAnimal.owner.location.longitude,
+              }
+            : null,
+        },
+        createdAt: prismaAnimal.createdAt.toISOString(),
+      }));
+      return mappedAnimals;
     },
 
-    availableAnimals: (): Animal[] => {
-      return animals.filter((a) => a.breedingStatus === "AVAILABLE");
+    availableAnimals: async (): Promise<Animal[]> => {
+      const availableAnimals = await prisma.animal.findMany({
+        where: { breedingStatus: "AVAILABLE" },
+        include: { owner: { include: { location: true } } },
+      });
+
+      return availableAnimals.map((prismaAnimal) => ({
+        id: prismaAnimal.id,
+        name: prismaAnimal.name,
+        species: prismaAnimal.species,
+        breed: prismaAnimal.breed,
+        age: prismaAnimal.age,
+        description: prismaAnimal.description,
+        sex: prismaAnimal.sex,
+        breedingStatus: prismaAnimal.breedingStatus,
+        owner: {
+          id: prismaAnimal.owner.id,
+          email: prismaAnimal.owner.email,
+          location: prismaAnimal.owner.location
+            ? {
+                latitude: prismaAnimal.owner.location.latitude,
+                longitude: prismaAnimal.owner.location.longitude,
+              }
+            : null,
+        },
+        createdAt: prismaAnimal.createdAt.toISOString(),
+      }));
     },
 
-    lookingAnimals: (): Animal[] => {
-      return animals.filter((a) => a.breedingStatus === "LOOKING");
+    lookingAnimals: async (): Promise<Animal[]> => {
+      const lookingAnimals = await prisma.animal.findMany({
+        where: { breedingStatus: "LOOKING" },
+        include: { owner: { include: { location: true } } },
+      });
+
+      return lookingAnimals.map((prismaAnimal) => ({
+        id: prismaAnimal.id,
+        name: prismaAnimal.name,
+        species: prismaAnimal.species,
+        breed: prismaAnimal.breed,
+        age: prismaAnimal.age,
+        description: prismaAnimal.description,
+        sex: prismaAnimal.sex,
+        breedingStatus: prismaAnimal.breedingStatus,
+        owner: {
+          id: prismaAnimal.owner.id,
+          email: prismaAnimal.owner.email,
+          location: prismaAnimal.owner.location
+            ? {
+                latitude: prismaAnimal.owner.location.latitude,
+                longitude: prismaAnimal.owner.location.longitude,
+              }
+            : null,
+        },
+        createdAt: prismaAnimal.createdAt.toISOString(),
+      }));
     },
 
     // todo type ID!
-    getAnimal(
+    getAnimal: async (
       _: unknown,
       args: { id: string },
       context: Context
-    ): Animal | null {
+    ): Promise<Animal | null> => {
       if (!context.user) throw new Error("Not authenticated");
-      return animals.find((a) => a.id === args.id) || null;
+      const prismaAnimal = await prisma.animal.findUnique({
+        where: { id: args.id },
+        include: { owner: { include: { location: true } } },
+      });
+      if (!prismaAnimal) return null;
+
+      return {
+        id: prismaAnimal.id,
+        name: prismaAnimal.name,
+        species: prismaAnimal.species,
+        breed: prismaAnimal.breed,
+        age: prismaAnimal.age,
+        description: prismaAnimal.description,
+        sex: prismaAnimal.sex,
+        breedingStatus: prismaAnimal.breedingStatus,
+        owner: {
+          id: prismaAnimal.owner.id,
+          email: prismaAnimal.owner.email,
+          location: prismaAnimal.owner.location
+            ? {
+                latitude: prismaAnimal.owner.location.latitude,
+                longitude: prismaAnimal.owner.location.longitude,
+              }
+            : null,
+        },
+        createdAt: prismaAnimal.createdAt.toISOString(),
+      };
     },
   },
 
@@ -55,114 +166,234 @@ export const resolvers = {
       _: unknown,
       args: MutationSignupArgs
     ): Promise<AuthPayload> => {
-      const existing = users.find((u) => u.email === args.email);
-      if (existing) throw new Error("Email already used");
+      const { email, password, location } = args.input;
 
-      const hashed = await bcrypt.hash(args.password, 10);
-      const newUser: User = {
-        id: randomUUID(),
-        email: args.email,
+      // Vérifie si l'utilisateur existe déjà
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) throw new Error("Email already used");
+
+      // Hash du mot de passe
+      const hashedPassword = await hashPassword(password);
+
+      // Création de l'utilisateur en DB avec location si elle existe
+      const prismaUser = await prisma.user.create({
+        data: {
+          id: randomUUID(),
+          email,
+          password: hashedPassword,
+          location: location
+            ? {
+                create: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                },
+              }
+            : undefined,
+        },
+        include: { location: true }, // on récupère la location pour le mapping
+      });
+
+      // Génération du token JWT
+      const token = createJWT(prismaUser.id);
+
+      const gqlCreatedUser: User = {
+        id: prismaUser.id,
+        email: prismaUser.email,
+        location: prismaUser.location
+          ? {
+              latitude: prismaUser.location.latitude,
+              longitude: prismaUser.location.longitude,
+            }
+          : null,
       };
-      // Si tu veux stocker le password en mémoire temporaire, car pas de clé password dans l'interface User pour des raisons de sécurité
-      (newUser as any).password = hashed;
 
-      users.push(newUser);
-
-      const token = jwt.sign(
-        { id: newUser.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: "7d" }
-      );
-
-      // sendWelcomeEmail(newUser.email, newUser.id).catch(console.error);
-
-      return { token, user: newUser };
+      return { token, user: gqlCreatedUser };
     },
 
     login: async (
       _: unknown,
       args: MutationLoginArgs
     ): Promise<AuthPayload> => {
-      const user = users.find((u) => u.email === args.email);
-      if (!user) throw new Error("User not found");
+      const { email, password } = args.input;
 
-      const valid = await bcrypt.compare(args.password, (user as any).password);
+      // Récupère l'utilisateur depuis la DB avec sa location
+      const prismaUser = await prisma.user.findUnique({
+        where: { email },
+        include: { location: true }, // récupère la location si elle existe
+      });
+
+      if (!prismaUser) throw new Error("User not found");
+
+      const valid = await verifyPassword(password, prismaUser.password);
       if (!valid) throw new Error("Invalid password");
 
-      const token = jwt.sign(
-        { id: user.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: "7d" }
-      );
+      // Génère le token JWT
+      const token = createJWT(prismaUser.id);
 
-      return { token, user };
+      // Mapping vers le type GraphQL
+      const gqlUser: User = {
+        id: prismaUser.id,
+        email: prismaUser.email,
+        location: prismaUser.location
+          ? {
+              latitude: prismaUser.location.latitude,
+              longitude: prismaUser.location.longitude,
+            }
+          : null, // null si pas de location
+      };
+
+      return { token, user: gqlUser };
     },
-
-    editAnimal: (
-      _: unknown,
-      args: MutationEditAnimalArgs,
-      context: Context
-    ): Animal => {
-      if (!context.user) throw new Error("Not authenticated");
-      const animal = animals.find((a) => a.id === args.input.id);
-      if (!animal) throw new Error("Animal not found");
-      if (animal.owner.id !== context.user.id)
-        throw new Error("Not authorized to edit this animal");
-
-      animal.name = args.input.name;
-      animal.species = args.input.species;
-      animal.age = args.input.age;
-      animal.sex = args.input.sex;
-      animal.breedingStatus = args.input.breedingStatus as BreedingStatus;
-      animal.breed = args.input.breed ?? null;
-      animal.description = args.input.description ?? null;
-
-      return animal;
-    },
-
-    createAnimal: (
+    createAnimal: async (
       _: unknown,
       args: MutationCreateAnimalArgs,
       context: Context
-    ): Animal => {
+    ): Promise<Animal> => {
       if (!context.user) throw new Error("Not authenticated");
-      const user = users.find((u) => u.id === context.user!.id);
-      if (!user) throw new Error("User not found");
+      const prismaUser = await prisma.user.findUnique({
+        where: { id: context.user.id },
+        include: { location: true }, // récupère la location si elle existe
+      });
+      if (!prismaUser) throw new Error("User not found");
 
-      const input = args.input;
+      const { name, sex, age, species, breed, description, breedingStatus } =
+        args.input;
 
-      const newAnimal: Animal = {
-        id: randomUUID(),
-        name: input.name,
-        sex: input.sex as Sex,
-        age: input.age,
-        species: input.species,
-        breed: input.breed ?? null,
-        description: input.description ?? null,
-        breedingStatus: input.breedingStatus as BreedingStatus,
-        owner: user,
-        createdAt: new Date().toISOString(),
+      const prismaAnimal = await prisma.animal.create({
+        data: {
+          name: name,
+          sex: sex,
+          age: age,
+          species: species,
+          breed: breed ?? null,
+          description: description ?? null,
+          breedingStatus: breedingStatus,
+          ownerId: prismaUser.id,
+        },
+      });
+
+      const gqlCreatedAnimal: Animal = {
+        id: prismaAnimal.id,
+        name: prismaAnimal.name,
+        sex: prismaAnimal.sex,
+        age: prismaAnimal.age,
+        species: prismaAnimal.species,
+        breed: prismaAnimal.breed,
+        description: prismaAnimal.description,
+        breedingStatus: prismaAnimal.breedingStatus,
+        owner: {
+          id: prismaUser.id,
+          email: prismaUser.email,
+          location: prismaUser.location
+            ? {
+                latitude: prismaUser.location.latitude,
+                longitude: prismaUser.location.longitude,
+              }
+            : null,
+        },
+        createdAt: prismaAnimal.createdAt.toISOString(),
+      };
+      return gqlCreatedAnimal;
+    },
+    editAnimal: async (
+      _: unknown,
+      args: MutationEditAnimalArgs,
+      context: Context
+    ): Promise<Animal> => {
+      if (!context.user) throw new Error("Not authenticated");
+      const prismaAnimal = await prisma.animal.findUnique({
+        where: { id: args.input.id },
+        include: { owner: { include: { location: true } } },
+      });
+      if (!prismaAnimal) throw new Error("Animal not found");
+      if (prismaAnimal.owner.id !== context.user.id)
+        throw new Error("Not authorized to edit this animal");
+
+      const { name, sex, age, species, breed, description, breedingStatus } =
+        args.input;
+
+      const updatedAnimal = await prisma.animal.update({
+        where: { id: prismaAnimal.id },
+        data: {
+          name: name,
+          species: species,
+          age: age,
+          sex: sex,
+          breedingStatus: breedingStatus,
+          breed: breed,
+          description: description,
+        },
+        include: { owner: { include: { location: true } } },
+      });
+
+      const gqlEditedAnimal: Animal = {
+        id: updatedAnimal.id,
+        name: updatedAnimal.name,
+        sex: updatedAnimal.sex,
+        age: updatedAnimal.age,
+        species: updatedAnimal.species,
+        breed: updatedAnimal.breed,
+        description: updatedAnimal.description,
+        breedingStatus: updatedAnimal.breedingStatus,
+        owner: {
+          id: updatedAnimal.owner.id,
+          email: updatedAnimal.owner.email,
+          location: updatedAnimal.owner.location
+            ? {
+                latitude: updatedAnimal.owner.location.latitude,
+                longitude: updatedAnimal.owner.location.longitude,
+              }
+            : null,
+        },
+        createdAt: updatedAnimal.createdAt.toISOString(),
       };
 
-      animals.push(newAnimal);
-      return newAnimal;
+      return gqlEditedAnimal;
     },
-    deleteAnimal: (
+    deleteAnimal: async (
       _: unknown,
-      args: { id: string },
+      args: MutationDeleteAnimalArgs,
       context: Context
-    ): Animal => {
+    ): Promise<Animal> => {
+      const { id } = args.input;
       if (!context.user) throw new Error("Not authenticated");
 
-      const animalIndex = animals.findIndex((a) => a.id === args.id);
-      if (animalIndex === -1) throw new Error("Animal not found");
-
-      const animal = animals[animalIndex];
-      if (animal.owner.id !== context.user.id)
+      const prismaAnimal = await prisma.animal.findUnique({
+        where: { id },
+        include: { owner: true },
+      });
+      if (!prismaAnimal) throw new Error("Animal not found");
+      if (prismaAnimal.owner.id !== context.user.id)
         throw new Error("Not authorized to delete this animal");
 
-      animals.splice(animalIndex, 1);
-      return animal;
+      const deletedAnimal = await prisma.animal.delete({
+        where: { id },
+        include: { owner: { include: { location: true } } },
+      });
+
+      const GqlDeletedAnimal: Animal = {
+        id: deletedAnimal.id,
+        name: deletedAnimal.name,
+        sex: deletedAnimal.sex,
+        age: deletedAnimal.age,
+        species: deletedAnimal.species,
+        breed: deletedAnimal.breed,
+        description: deletedAnimal.description,
+        breedingStatus: deletedAnimal.breedingStatus,
+        owner: {
+          id: deletedAnimal.owner.id,
+          email: deletedAnimal.owner.email,
+          location: deletedAnimal.owner.location
+            ? {
+                latitude: deletedAnimal.owner.location.latitude,
+                longitude: deletedAnimal.owner.location.longitude,
+              }
+            : null,
+        },
+        createdAt: deletedAnimal.createdAt.toISOString(),
+      };
+
+      return GqlDeletedAnimal;
     },
   },
 };

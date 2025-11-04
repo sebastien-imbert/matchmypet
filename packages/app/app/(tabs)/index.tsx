@@ -67,33 +67,39 @@ export default function HomeTab() {
 
   const renderAnimal = ({ item }: { item: Animal }) => (
     <Pressable onPress={() => router.push(`/animals/${item.id}`)}>
-      
       <View style={styles.card}>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text>
-        {item.species} - {item.age} ans - {item.sex}
-      </Text>
-      <Text>Status de reproduction: {item.breedingStatus}</Text>
-    </View>
+        <View style={styles.placeholder}>
+          <Text style={styles.placeholderText}>🐾</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.name}>{item.name}</Text>
+          <Text style={styles.cardDescription}>
+            {item.species} • {item.age} ans • {item.sex}
+          </Text>
+          <Text style={styles.cardDescription}>
+            Statut de reproduction: {item.breedingStatus}
+          </Text>
+        </View>
+      </View>
     </Pressable>
   );
 
   return (
-      <View style={styles.container}>
-        <Text style={styles.header}>Mes animaux</Text>
-        <FlatList
-          data={animals}
-          keyExtractor={(item) => item.id}
-          renderItem={renderAnimal}
-          contentContainerStyle={{ padding: 20 }}
-        />
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => router.push("/animals/add")}
-        >
-          <Text style={styles.addButtonText}>Ajouter un animal</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.container}>
+      <Text style={styles.header}>Mes animaux</Text>
+      <FlatList
+        data={animals}
+        keyExtractor={(item) => item.id}
+        renderItem={renderAnimal}
+        // contentContainerStyle={{ padding: 20 }}
+      />
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => router.push("/animals/add")}
+      >
+        <Text style={styles.addButtonText}>Ajouter un animal</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -102,6 +108,18 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
     backgroundColor: "#fff",
+  },
+  placeholder: {
+    width: 80,
+    height: 80,
+    backgroundColor: "#eee",
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  placeholderText: {
+    fontSize: 30,
+    textAlign: "center",
+    lineHeight: 80,
   },
   header: {
     fontSize: 28,
@@ -115,7 +133,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#f7f7f7",
-    padding: 20,
+    padding: 12,
     borderRadius: 15,
     marginBottom: 15,
     shadowColor: "#000",
@@ -123,6 +141,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 5,
     elevation: 3,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
   },
   cardTitle: {
     fontSize: 20,

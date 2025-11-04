@@ -4,6 +4,12 @@ export const typeDefs = gql`
   type User {
     id: ID!
     email: String!
+    location: Location
+  }
+
+  type Location {
+    latitude: Float!
+    longitude: Float!
   }
 
   type AuthPayload {
@@ -40,6 +46,22 @@ export const typeDefs = gql`
     CHAT
   }
 
+  input LocationInput {
+    latitude: Float!
+    longitude: Float!
+  }
+
+  input SignupInput {
+    email: String!
+    password: String!
+    location: LocationInput
+  }
+
+  input LoginInput {
+    email: String!
+    password: String!
+  }
+
   input CreateAnimalInput {
     name: String!
     sex: Sex!
@@ -66,7 +88,6 @@ export const typeDefs = gql`
   }
 
   type Query {
-    hello: String!
     me: User
     myAnimals: [Animal!]! # Récupère les animaux de l'utilisateur connecté
     availableAnimals: [Animal!]! # Tous les animaux proposés en saillie
@@ -75,10 +96,10 @@ export const typeDefs = gql`
   }
 
   type Mutation {
-    signup(email: String!, password: String!): AuthPayload! # Inscription
-    login(email: String!, password: String!): AuthPayload! # Connexion
+    signup(input: SignupInput!): AuthPayload! # Inscription
+    login(input: LoginInput!): AuthPayload! # Connexion
     createAnimal(input: CreateAnimalInput!): Animal! # Ajouter un animal
     editAnimal(input: EditAnimalInput!): Animal! # Éditer un animal
-    deleteAnimal(id: ID!): Animal! # Supprimer un animal
+    deleteAnimal(input: DeleteAnimalInput!): Animal! # Supprimer un animal
   }
 `;

@@ -7,6 +7,6 @@ generates:
       - "typescript-resolvers"
     config:
       contextType: "../../server/src/index#Context"
-      avoidOptionals: true
+      # avoidOptionals: true
       enumsAsTypes: true
-      maybeValue: T
+      # maybeValue: T

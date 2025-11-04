@@ -51,8 +51,8 @@ export default function CreateAnimalScreen() {
     const showToast = () => {
     Toast.show({
       type: 'success',
-      text1: 'Hello',
-      text2: 'This is some something 👋'
+      text1: `${name} a été ajouté avec succès !`,
+      text2: 'Vous pouvez maintenant le retrouver dans votre profil.'
     });
   }
 
