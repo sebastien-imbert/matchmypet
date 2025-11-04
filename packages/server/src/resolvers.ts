@@ -66,13 +66,18 @@ export const resolvers = {
       return mappedAnimals;
     },
 
-    availableAnimals: async (): Promise<Animal[]> => {
+    availableAnimals: async (_: unknown, __: unknown, context: Context): Promise<Animal[]> => {
+
+      const id = context.user?.id;
+      
       const availableAnimals = await prisma.animal.findMany({
         where: { breedingStatus: "AVAILABLE" },
         include: { owner: { include: { location: true } } },
       });
 
-      return availableAnimals.map((prismaAnimal) => ({
+      const filteredAnimals = id ? availableAnimals.filter(animal => animal.ownerId !== id) : availableAnimals;
+
+      return filteredAnimals.map((prismaAnimal) => ({
         id: prismaAnimal.id,
         name: prismaAnimal.name,
         species: prismaAnimal.species,
@@ -95,13 +100,20 @@ export const resolvers = {
       }));
     },
 
-    lookingAnimals: async (): Promise<Animal[]> => {
+    lookingAnimals: async (
+      _: unknown,
+      __: unknown,
+      context: Context
+    ): Promise<Animal[]> => {
+      const id = context.user?.id;
       const lookingAnimals = await prisma.animal.findMany({
         where: { breedingStatus: "LOOKING" },
         include: { owner: { include: { location: true } } },
       });
 
-      return lookingAnimals.map((prismaAnimal) => ({
+      const filteredAnimals = id ? lookingAnimals.filter(animal => animal.ownerId !== id) : lookingAnimals;
+
+      return filteredAnimals.map((prismaAnimal) => ({
         id: prismaAnimal.id,
         name: prismaAnimal.name,
         species: prismaAnimal.species,
