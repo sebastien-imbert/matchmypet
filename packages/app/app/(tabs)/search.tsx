@@ -24,6 +24,7 @@ const GET_AVAILABLE_ANIMALS = gql`
       description
       sex
       breedingStatus
+      distance
       owner {
         id
         email
@@ -48,6 +49,7 @@ const GET_LOOKING_ANIMALS = gql`
       description
       sex
       breedingStatus
+      distance
       owner {
         id
         email

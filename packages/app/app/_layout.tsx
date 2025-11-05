@@ -65,13 +65,18 @@ export default function RootLayout() {
     checkOnboarding();
   }, []);
 
-  // useEffect(() => {
-  //   const deleteAll = async () => {
-  //     await SecureStore.deleteItemAsync("userToken");
-  //     await SecureStore.deleteItemAsync("hasOnboarded");
-  //   };
-  //   deleteAll();
-  // }, []);
+  useEffect(() => {
+    const deleteAll = async () => {
+      await SecureStore.deleteItemAsync("userToken");
+      await SecureStore.deleteItemAsync("hasOnboarded");
+    };
+    const logToken = async () => {
+      const token = await SecureStore.getItemAsync("userToken");
+      console.log("User token:", token);
+    };
+    logToken();
+    // deleteAll();
+  }, []);
 
   if (!loaded || checking) {
     return (

@@ -3,7 +3,7 @@ import { Animal } from "../../shared/generated/graphql-types";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-export const AnimalCard = ({ item, from }: { item: Animal, from: string }) => {
+export const AnimalCard = ({ item, from }: { item: Animal; from: string }) => {
   const router = useRouter();
 
   const statusColor =
@@ -11,17 +11,20 @@ export const AnimalCard = ({ item, from }: { item: Animal, from: string }) => {
 
   return (
     <Pressable
-      onPress={() => router.push({pathname: `/animals/[id]`, params: { id: item.id, from }})}
+      onPress={() =>
+        router.push({
+          pathname: `/animals/[id]`,
+          params: { id: item.id, from },
+        })
+      }
       style={({ pressed }) => [
         styles.card,
         pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
       ]}
     >
-   
       <Image
         source={{
-          uri:
-            "https://placecats.com/200/200" /* futur champ image */,
+          uri: "https://placecats.com/200/200" /* futur champ image */,
         }}
         style={styles.image}
       />
@@ -29,11 +32,10 @@ export const AnimalCard = ({ item, from }: { item: Animal, from: string }) => {
       <View style={{ flex: 1 }}>
         <View style={styles.header}>
           <Text style={styles.name}>{item.name}</Text>
+
           <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
             <Text style={styles.statusText}>
-              {item.breedingStatus === "AVAILABLE"
-                ? "Disponible"
-                : "Recherche"}
+              {item.breedingStatus === "AVAILABLE" ? "Disponible" : "Recherche"}
             </Text>
           </View>
         </View>
@@ -43,10 +45,26 @@ export const AnimalCard = ({ item, from }: { item: Animal, from: string }) => {
           <Text style={styles.meta}>
             {item.species} • {item.age} ans
           </Text>
+          {from !== "my-animals" && item.distance !== undefined && (
+            <>
+              <MaterialCommunityIcons
+                name="map-marker"
+                size={16}
+                color="#666"
+              />
+              <Text style={styles.meta}>
+                {item.distance?.toFixed(2).replace(".", ",")} km
+              </Text>
+            </>
+          )}
         </View>
 
         <View style={styles.metaRow}>
-          <MaterialCommunityIcons name="gender-male-female" size={16} color="#666" />
+          <MaterialCommunityIcons
+            name="gender-male-female"
+            size={16}
+            color="#666"
+          />
           <Text style={styles.meta}>{item.sex}</Text>
         </View>
 

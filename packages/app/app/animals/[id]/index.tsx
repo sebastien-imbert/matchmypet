@@ -15,22 +15,7 @@ import {
   MutationDeleteAnimalArgs,
 } from "../../../../shared/generated/graphql-types";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-
-const GET_ANIMAL = gql`
-  query GetAnimal($id: ID!) {
-    getAnimal(id: $id) {
-      id
-      name
-      species
-      sex
-      age
-      breed
-      description
-      breedingStatus
-      createdAt
-    }
-  }
-`;
+import { GET_ANIMAL } from "@/queries/getAnimal";
 
 const DELETE_ANIMAL = gql`
   mutation DeleteAnimal($input: DeleteAnimalInput!) {
@@ -120,6 +105,14 @@ export default function AnimalDetail() {
             <Text style={styles.meta}>{animal.breed}</Text>
           </View>
         )}
+        {animal.distance && (
+          <View style={styles.metaRow}>
+            <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
+            <Text style={styles.meta}>
+              {animal.distance?.toFixed(2).replace(".", ",")} km
+            </Text>
+          </View>
+        )}
 
         <View style={styles.metaRow}>
           <MaterialCommunityIcons
@@ -139,7 +132,7 @@ export default function AnimalDetail() {
           Ajouté le {new Date(animal.createdAt).toLocaleDateString()}
         </Text>
 
-        {from === "default" && (
+        {from === "my-animals" && (
           <View style={styles.buttonsRow}>
             <Pressable
               style={[styles.button, styles.editButton]}
