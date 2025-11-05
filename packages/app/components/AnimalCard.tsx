@@ -3,7 +3,7 @@ import { Animal } from "../../shared/generated/graphql-types";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-export const AnimalCard = ({ item }: { item: Animal }) => {
+export const AnimalCard = ({ item, from }: { item: Animal, from: string }) => {
   const router = useRouter();
 
   const statusColor =
@@ -11,12 +11,13 @@ export const AnimalCard = ({ item }: { item: Animal }) => {
 
   return (
     <Pressable
-      onPress={() => router.push(`/animals/${item.id}`)}
+      onPress={() => router.push({pathname: `/animals/[id]`, params: { id: item.id, from }})}
       style={({ pressed }) => [
         styles.card,
         pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
       ]}
     >
+   
       <Image
         source={{
           uri:

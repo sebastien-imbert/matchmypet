@@ -68,7 +68,7 @@ export default function HomeTab() {
   }
 
   const renderAnimal = ({ item }: { item: Animal }) => (
-    <AnimalCard item={item} />
+    <AnimalCard item={item} from="default" />
   );
 
   return (

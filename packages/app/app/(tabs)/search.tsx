@@ -162,7 +162,7 @@ export default function AnimalsScreen() {
         <FlatList
           data={filteredAnimals}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <AnimalCard item={item} />}
+          renderItem={({ item }) => <AnimalCard item={item} from="search" />}
           contentContainerStyle={{ paddingBottom: 100 }}
         />
       )}
