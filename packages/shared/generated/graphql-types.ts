@@ -67,6 +67,14 @@ export type EditAnimalInput = {
   species: Species;
 };
 
+export type HomeData = {
+  __typename?: 'HomeData';
+  availableAnimals: Array<Animal>;
+  lookingAnimals: Array<Animal>;
+  me?: Maybe<User>;
+  myAnimals: Array<Animal>;
+};
+
 export type Location = {
   __typename?: 'Location';
   latitude: Scalars['Float']['output'];
@@ -121,6 +129,7 @@ export type Query = {
   __typename?: 'Query';
   availableAnimals: Array<Animal>;
   getAnimal?: Maybe<Animal>;
+  homeData: HomeData;
   lookingAnimals: Array<Animal>;
   me?: Maybe<User>;
   myAnimals: Array<Animal>;
@@ -139,6 +148,7 @@ export type SignupInput = {
   email: Scalars['String']['input'];
   location?: InputMaybe<LocationInput>;
   password: Scalars['String']['input'];
+  username: Scalars['String']['input'];
 };
 
 export type Species =
@@ -150,6 +160,7 @@ export type User = {
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   location?: Maybe<Location>;
+  username: Scalars['String']['output'];
 };
 
 
@@ -233,6 +244,7 @@ export type ResolversTypes = {
   DeleteAnimalInput: DeleteAnimalInput;
   EditAnimalInput: EditAnimalInput;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
+  HomeData: ResolverTypeWrapper<HomeData>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   Location: ResolverTypeWrapper<Location>;
@@ -256,6 +268,7 @@ export type ResolversParentTypes = {
   DeleteAnimalInput: DeleteAnimalInput;
   EditAnimalInput: EditAnimalInput;
   Float: Scalars['Float']['output'];
+  HomeData: HomeData;
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   Location: Location;
@@ -286,6 +299,13 @@ export type AuthPayloadResolvers<ContextType = Context, ParentType extends Resol
   user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
 };
 
+export type HomeDataResolvers<ContextType = Context, ParentType extends ResolversParentTypes['HomeData'] = ResolversParentTypes['HomeData']> = {
+  availableAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
+  lookingAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
+  me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  myAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
+};
+
 export type LocationResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Location'] = ResolversParentTypes['Location']> = {
   latitude?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   longitude?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
@@ -302,6 +322,7 @@ export type MutationResolvers<ContextType = Context, ParentType extends Resolver
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   availableAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
   getAnimal?: Resolver<Maybe<ResolversTypes['Animal']>, ParentType, ContextType, RequireFields<QueryGetAnimalArgs, 'id'>>;
+  homeData?: Resolver<ResolversTypes['HomeData'], ParentType, ContextType>;
   lookingAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   myAnimals?: Resolver<Array<ResolversTypes['Animal']>, ParentType, ContextType>;
@@ -311,11 +332,13 @@ export type UserResolvers<ContextType = Context, ParentType extends ResolversPar
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   location?: Resolver<Maybe<ResolversTypes['Location']>, ParentType, ContextType>;
+  username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = Context> = {
   Animal?: AnimalResolvers<ContextType>;
   AuthPayload?: AuthPayloadResolvers<ContextType>;
+  HomeData?: HomeDataResolvers<ContextType>;
   Location?: LocationResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;

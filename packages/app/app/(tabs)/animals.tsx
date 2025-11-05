@@ -8,26 +8,12 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { Animal } from "../../../shared/generated/graphql-types";
 import { AnimalCard } from "@/components/AnimalCard";
+import { MY_ANIMALS_QUERY } from "@/queries/myAnimals";
 
-const MY_ANIMALS_QUERY = gql`
-  query MyAnimals {
-    myAnimals {
-      id
-      name
-      species
-      age
-      sex
-      breedingStatus
-      description
-    }
-  }
-`;
-
-export default function HomeTab() {
+export default function AnimalsTab() {
   const router = useRouter();
   const { data, loading, error } = useQuery<{ myAnimals: Animal[] }>(
     MY_ANIMALS_QUERY
