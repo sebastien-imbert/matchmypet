@@ -14,6 +14,7 @@ import { Context } from "./index";
 // import { sendWelcomeEmail } from "./libs/mailer";
 import { createJWT, hashPassword, verifyPassword } from "./utils/auth";
 import { prisma } from "./prisma/client";
+import { calculateDistanceKm } from "./utils/distance";
 
 export const resolvers = {
   Query: {
@@ -63,34 +64,46 @@ export const resolvers = {
         include: { owner: { include: { location: true } } },
       });
 
-      // Filtrer pour ne pas inclure les animaux de l'utilisateur
       const filterOwner = (animals: typeof availableAnimalsData) =>
         animals.filter((a) => a.ownerId !== context.user?.id);
 
       const mapAnimal = (
         animal: (typeof availableAnimalsData)[number]
-      ): Animal => ({
-        id: animal.id,
-        name: animal.name,
-        species: animal.species,
-        breed: animal.breed,
-        age: animal.age,
-        description: animal.description,
-        sex: animal.sex,
-        breedingStatus: animal.breedingStatus,
-        owner: {
-          id: animal.owner.id,
-          email: animal.owner.email,
-          username: animal.owner.username,
-          location: animal.owner.location
-            ? {
-                latitude: animal.owner.location.latitude,
-                longitude: animal.owner.location.longitude,
-              }
-            : null,
-        },
-        createdAt: animal.createdAt.toISOString(),
-      });
+      ): Animal & { distance?: number } => {
+        let distance: number | undefined = undefined;
+        if (me.location && animal.owner.location) {
+          distance = calculateDistanceKm(
+            me.location.latitude,
+            me.location.longitude,
+            animal.owner.location.latitude,
+            animal.owner.location.longitude
+          );
+        }
+
+        return {
+          id: animal.id,
+          name: animal.name,
+          species: animal.species,
+          breed: animal.breed,
+          age: animal.age,
+          description: animal.description,
+          sex: animal.sex,
+          breedingStatus: animal.breedingStatus,
+          distance,
+          owner: {
+            id: animal.owner.id,
+            email: animal.owner.email,
+            username: animal.owner.username,
+            location: animal.owner.location
+              ? {
+                  latitude: animal.owner.location.latitude,
+                  longitude: animal.owner.location.longitude,
+                }
+              : null,
+          },
+          createdAt: animal.createdAt.toISOString(),
+        };
+      };
 
       return {
         me: {
@@ -153,37 +166,69 @@ export const resolvers = {
     ): Promise<Animal[]> => {
       const id = context.user?.id;
 
+      // On récupère les animaux disponibles
       const availableAnimals = await prisma.animal.findMany({
         where: { breedingStatus: "AVAILABLE" },
         include: { owner: { include: { location: true } } },
       });
 
+      // On exclut les animaux de l'utilisateur connecté
       const filteredAnimals = id
         ? availableAnimals.filter((animal) => animal.ownerId !== id)
         : availableAnimals;
 
-      return filteredAnimals.map((prismaAnimal) => ({
-        id: prismaAnimal.id,
-        name: prismaAnimal.name,
-        species: prismaAnimal.species,
-        breed: prismaAnimal.breed,
-        age: prismaAnimal.age,
-        description: prismaAnimal.description,
-        sex: prismaAnimal.sex,
-        breedingStatus: prismaAnimal.breedingStatus,
-        owner: {
-          id: prismaAnimal.owner.id,
-          email: prismaAnimal.owner.email,
-          username: prismaAnimal.owner.username,
-          location: prismaAnimal.owner.location
-            ? {
-                latitude: prismaAnimal.owner.location.latitude,
-                longitude: prismaAnimal.owner.location.longitude,
-              }
-            : null,
-        },
-        createdAt: prismaAnimal.createdAt.toISOString(),
-      }));
+      // On récupère la localisation de l'utilisateur connecté
+      let userLocation = null;
+      if (id) {
+        const me = await prisma.user.findUnique({
+          where: { id },
+          include: { location: true },
+        });
+        userLocation = me?.location ?? null;
+      }
+
+      // On map les animaux avec la distance
+      return filteredAnimals.map((prismaAnimal) => {
+        let distance: number | null = null;
+
+        if (
+          userLocation &&
+          prismaAnimal.owner.location &&
+          userLocation.latitude !== null &&
+          userLocation.longitude !== null
+        ) {
+          distance = calculateDistanceKm(
+            userLocation.latitude,
+            userLocation.longitude,
+            prismaAnimal.owner.location.latitude,
+            prismaAnimal.owner.location.longitude
+          );
+        }
+
+        return {
+          id: prismaAnimal.id,
+          name: prismaAnimal.name,
+          species: prismaAnimal.species,
+          breed: prismaAnimal.breed,
+          age: prismaAnimal.age,
+          description: prismaAnimal.description,
+          sex: prismaAnimal.sex,
+          breedingStatus: prismaAnimal.breedingStatus,
+          distance, // <-- 👈 ajouté ici
+          owner: {
+            id: prismaAnimal.owner.id,
+            email: prismaAnimal.owner.email,
+            username: prismaAnimal.owner.username,
+            location: prismaAnimal.owner.location
+              ? {
+                  latitude: prismaAnimal.owner.location.latitude,
+                  longitude: prismaAnimal.owner.location.longitude,
+                }
+              : null,
+          },
+          createdAt: prismaAnimal.createdAt.toISOString(),
+        };
+      });
     },
 
     lookingAnimals: async (
@@ -192,51 +237,101 @@ export const resolvers = {
       context: Context
     ): Promise<Animal[]> => {
       const id = context.user?.id;
+
+      // Récupère tous les animaux "en recherche"
       const lookingAnimals = await prisma.animal.findMany({
         where: { breedingStatus: "LOOKING" },
         include: { owner: { include: { location: true } } },
       });
 
+      // Exclut les animaux de l'utilisateur connecté
       const filteredAnimals = id
         ? lookingAnimals.filter((animal) => animal.ownerId !== id)
         : lookingAnimals;
 
-      return filteredAnimals.map((prismaAnimal) => ({
-        id: prismaAnimal.id,
-        name: prismaAnimal.name,
-        species: prismaAnimal.species,
-        breed: prismaAnimal.breed,
-        age: prismaAnimal.age,
-        description: prismaAnimal.description,
-        sex: prismaAnimal.sex,
-        breedingStatus: prismaAnimal.breedingStatus,
-        owner: {
-          id: prismaAnimal.owner.id,
-          email: prismaAnimal.owner.email,
-          username: prismaAnimal.owner.username,
-          location: prismaAnimal.owner.location
-            ? {
-                latitude: prismaAnimal.owner.location.latitude,
-                longitude: prismaAnimal.owner.location.longitude,
-              }
-            : null,
-        },
-        createdAt: prismaAnimal.createdAt.toISOString(),
-      }));
+      // Récupère la localisation de l'utilisateur connecté
+      let userLocation = null;
+      if (id) {
+        const me = await prisma.user.findUnique({
+          where: { id },
+          include: { location: true },
+        });
+        userLocation = me?.location ?? null;
+      }
+
+      // Map avec calcul de distance
+      return filteredAnimals.map((prismaAnimal) => {
+        let distance: number | null = null;
+
+        if (
+          userLocation &&
+          prismaAnimal.owner.location &&
+          userLocation.latitude !== null &&
+          userLocation.longitude !== null
+        ) {
+          distance = calculateDistanceKm(
+            userLocation.latitude,
+            userLocation.longitude,
+            prismaAnimal.owner.location.latitude,
+            prismaAnimal.owner.location.longitude
+          );
+        }
+
+        return {
+          id: prismaAnimal.id,
+          name: prismaAnimal.name,
+          species: prismaAnimal.species,
+          breed: prismaAnimal.breed,
+          age: prismaAnimal.age,
+          description: prismaAnimal.description,
+          sex: prismaAnimal.sex,
+          breedingStatus: prismaAnimal.breedingStatus,
+          distance, // 👈 ajouté ici
+          owner: {
+            id: prismaAnimal.owner.id,
+            email: prismaAnimal.owner.email,
+            username: prismaAnimal.owner.username,
+            location: prismaAnimal.owner.location
+              ? {
+                  latitude: prismaAnimal.owner.location.latitude,
+                  longitude: prismaAnimal.owner.location.longitude,
+                }
+              : null,
+          },
+          createdAt: prismaAnimal.createdAt.toISOString(),
+        };
+      });
     },
 
-    // todo type ID!
     getAnimal: async (
       _: unknown,
       args: { id: string },
       context: Context
-    ): Promise<Animal | null> => {
+    ): Promise<(Animal & { distance?: number }) | null> => {
       if (!context.user) throw new Error("Not authenticated");
+
       const prismaAnimal = await prisma.animal.findUnique({
         where: { id: args.id },
         include: { owner: { include: { location: true } } },
       });
+
       if (!prismaAnimal) return null;
+
+      // Récupère l'utilisateur avec sa location
+      const me = await prisma.user.findUnique({
+        where: { id: context.user.id },
+        include: { location: true },
+      });
+
+      let distance: number | undefined = undefined;
+      if (me?.location && prismaAnimal.owner.location) {
+        distance = calculateDistanceKm(
+          me.location.latitude,
+          me.location.longitude,
+          prismaAnimal.owner.location.latitude,
+          prismaAnimal.owner.location.longitude
+        );
+      }
 
       return {
         id: prismaAnimal.id,
@@ -247,6 +342,7 @@ export const resolvers = {
         description: prismaAnimal.description,
         sex: prismaAnimal.sex,
         breedingStatus: prismaAnimal.breedingStatus,
+        distance,
         owner: {
           id: prismaAnimal.owner.id,
           email: prismaAnimal.owner.email,

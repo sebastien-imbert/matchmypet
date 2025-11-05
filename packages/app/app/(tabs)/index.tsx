@@ -53,12 +53,11 @@ export default function HomeTab() {
     <ScrollView
       style={styles.container}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 80 }}
+      contentContainerStyle={{ paddingBottom: 50 }}
     >
       {/* Header bienvenue */}
       {user && (
         <View style={styles.header}>
-          
           <Text style={styles.welcome}>👋 Bonjour {user.username}</Text>
           <Text style={styles.subtext}>Heureux de vous revoir !</Text>
         </View>
@@ -108,23 +107,6 @@ export default function HomeTab() {
         </View>
       </View>
 
-      {/* Section Mes animaux */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🐾 Mes animaux</Text>
-        {myAnimals.length === 0 ? (
-          <Text style={styles.emptyText}>
-            Vous n’avez pas encore ajouté d’animal.
-          </Text>
-        ) : (
-          <FlatList
-            data={myAnimals}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <AnimalCard item={item} from="home" />}
-            scrollEnabled={false}
-          />
-        )}
-      </View>
-
       {/* Section Dispos */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>🐶 Derniers animaux disponibles</Text>
@@ -134,7 +116,7 @@ export default function HomeTab() {
           <FlatList
             data={availableAnimals.slice(0, 3)}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <AnimalCard item={item} from="home" />}
+            renderItem={({ item }) => <AnimalCard item={item} from="default" />}
             scrollEnabled={false}
           />
         )}
@@ -151,7 +133,26 @@ export default function HomeTab() {
           <FlatList
             data={lookingAnimals.slice(0, 3)}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <AnimalCard item={item} from="home" />}
+            renderItem={({ item }) => <AnimalCard item={item} from="default" />}
+            scrollEnabled={false}
+          />
+        )}
+      </View>
+
+      {/* Section Mes animaux */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>🐾 Mes animaux</Text>
+        {myAnimals.length === 0 ? (
+          <Text style={styles.emptyText}>
+            Vous n’avez pas encore ajouté d’animal.
+          </Text>
+        ) : (
+          <FlatList
+            data={myAnimals}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <AnimalCard item={item} from="my-animals" />
+            )}
             scrollEnabled={false}
           />
         )}

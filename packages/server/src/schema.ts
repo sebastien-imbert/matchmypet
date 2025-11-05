@@ -34,6 +34,7 @@ export const typeDefs = gql`
     breedingStatus: BreedingStatus!
     owner: User!
     createdAt: String!
+    distance: Float
   }
 
   type HomeData {

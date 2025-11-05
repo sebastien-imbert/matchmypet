@@ -24,6 +24,7 @@ export type Animal = {
   breedingStatus: BreedingStatus;
   createdAt: Scalars['String']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  distance?: Maybe<Scalars['Float']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   owner: User;
@@ -287,6 +288,7 @@ export type AnimalResolvers<ContextType = Context, ParentType extends ResolversP
   breedingStatus?: Resolver<ResolversTypes['BreedingStatus'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  distance?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   owner?: Resolver<ResolversTypes['User'], ParentType, ContextType>;

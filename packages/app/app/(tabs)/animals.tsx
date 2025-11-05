@@ -54,7 +54,7 @@ export default function AnimalsTab() {
   }
 
   const renderAnimal = ({ item }: { item: Animal }) => (
-    <AnimalCard item={item} from="default" />
+    <AnimalCard item={item} from="my-animals" />
   );
 
   return (

@@ -37,6 +37,7 @@ export const HOME_DATA_QUERY = gql`
         breed
         description
         breedingStatus
+        distance
         createdAt
       }
       lookingAnimals {
@@ -48,6 +49,7 @@ export const HOME_DATA_QUERY = gql`
         breed
         description
         breedingStatus
+        distance
         createdAt
       }
     }
