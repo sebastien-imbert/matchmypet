@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import {
   View,
   Text,
@@ -74,6 +74,7 @@ export const SIGNUP_MUTATION = gql`
       user {
         id
         email
+        username
         location {
           latitude
           longitude
@@ -86,10 +87,14 @@ export const SIGNUP_MUTATION = gql`
 export default function Onboarding() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [signup, { loading, error }] = useMutation<
     { signup: AuthPayload },
     MutationSignupArgs
-  >(SIGNUP_MUTATION);
+  >(SIGNUP_MUTATION, {
+    refetchQueries: ["Me"],
+    awaitRefetchQueries: true,
+  });
 
   const router = useRouter();
 
@@ -115,12 +120,12 @@ export default function Onboarding() {
 
   const handleSignup = async () => {
     try {
-      console.log("Attempting signup with:", { email, password, location });
       const { data } = await signup({
         variables: {
           input: {
             email,
             password,
+            username,
             location,
           },
         },
@@ -197,11 +202,24 @@ export default function Onboarding() {
                   autoCapitalize="none"
                   keyboardType="email-address"
                 />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nom d'utilisateur"
+                  placeholderTextColor="#aaa"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                />
                 <PasswordInput
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Mot de passe"
                 />
+                {error && (
+                  <Text style={{ color: "red", marginBottom: 10 }}>
+                    Erreur lors de l'inscription. Veuillez réessayer.
+                  </Text>
+                )}
                 <TouchableOpacity
                   style={[styles.button, loading && { opacity: 0.6 }]}
                   onPress={handleSignup}

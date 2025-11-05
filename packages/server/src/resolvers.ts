@@ -8,6 +8,7 @@ import {
   MutationSignupArgs,
   User,
   MutationDeleteAnimalArgs,
+  HomeData,
 } from "../../shared/generated/graphql-types";
 import { Context } from "./index";
 // import { sendWelcomeEmail } from "./libs/mailer";
@@ -29,6 +30,84 @@ export const resolvers = {
       });
 
       return me;
+    },
+    homeData: async (
+      _: unknown,
+      __: unknown,
+      context: Context
+    ): Promise<HomeData> => {
+      if (!context.user) throw new Error("Not authenticated");
+
+      // Récupère l'utilisateur
+      const me = await prisma.user.findUnique({
+        where: { id: context.user.id },
+        include: { location: true },
+      });
+
+      if (!me) throw new Error("User not found");
+
+      // Récupère les animaux de l'utilisateur
+      const myAnimalsData = await prisma.animal.findMany({
+        where: { ownerId: context.user.id },
+        include: { owner: { include: { location: true } } },
+      });
+
+      // Récupère les animaux disponibles et en recherche
+      const availableAnimalsData = await prisma.animal.findMany({
+        where: { breedingStatus: "AVAILABLE" },
+        include: { owner: { include: { location: true } } },
+      });
+
+      const lookingAnimalsData = await prisma.animal.findMany({
+        where: { breedingStatus: "LOOKING" },
+        include: { owner: { include: { location: true } } },
+      });
+
+      // Filtrer pour ne pas inclure les animaux de l'utilisateur
+      const filterOwner = (animals: typeof availableAnimalsData) =>
+        animals.filter((a) => a.ownerId !== context.user?.id);
+
+      const mapAnimal = (
+        animal: (typeof availableAnimalsData)[number]
+      ): Animal => ({
+        id: animal.id,
+        name: animal.name,
+        species: animal.species,
+        breed: animal.breed,
+        age: animal.age,
+        description: animal.description,
+        sex: animal.sex,
+        breedingStatus: animal.breedingStatus,
+        owner: {
+          id: animal.owner.id,
+          email: animal.owner.email,
+          username: animal.owner.username,
+          location: animal.owner.location
+            ? {
+                latitude: animal.owner.location.latitude,
+                longitude: animal.owner.location.longitude,
+              }
+            : null,
+        },
+        createdAt: animal.createdAt.toISOString(),
+      });
+
+      return {
+        me: {
+          id: me.id,
+          email: me.email,
+          username: me.username,
+          location: me.location
+            ? {
+                latitude: me.location.latitude,
+                longitude: me.location.longitude,
+              }
+            : null,
+        },
+        myAnimals: myAnimalsData.map(mapAnimal),
+        availableAnimals: filterOwner(availableAnimalsData).map(mapAnimal),
+        lookingAnimals: filterOwner(lookingAnimalsData).map(mapAnimal),
+      };
     },
 
     myAnimals: async (
@@ -54,6 +133,7 @@ export const resolvers = {
         owner: {
           id: prismaAnimal.owner.id,
           email: prismaAnimal.owner.email,
+          username: prismaAnimal.owner.username,
           location: prismaAnimal.owner.location
             ? {
                 latitude: prismaAnimal.owner.location.latitude,
@@ -66,16 +146,21 @@ export const resolvers = {
       return mappedAnimals;
     },
 
-    availableAnimals: async (_: unknown, __: unknown, context: Context): Promise<Animal[]> => {
-
+    availableAnimals: async (
+      _: unknown,
+      __: unknown,
+      context: Context
+    ): Promise<Animal[]> => {
       const id = context.user?.id;
-      
+
       const availableAnimals = await prisma.animal.findMany({
         where: { breedingStatus: "AVAILABLE" },
         include: { owner: { include: { location: true } } },
       });
 
-      const filteredAnimals = id ? availableAnimals.filter(animal => animal.ownerId !== id) : availableAnimals;
+      const filteredAnimals = id
+        ? availableAnimals.filter((animal) => animal.ownerId !== id)
+        : availableAnimals;
 
       return filteredAnimals.map((prismaAnimal) => ({
         id: prismaAnimal.id,
@@ -89,6 +174,7 @@ export const resolvers = {
         owner: {
           id: prismaAnimal.owner.id,
           email: prismaAnimal.owner.email,
+          username: prismaAnimal.owner.username,
           location: prismaAnimal.owner.location
             ? {
                 latitude: prismaAnimal.owner.location.latitude,
@@ -111,7 +197,9 @@ export const resolvers = {
         include: { owner: { include: { location: true } } },
       });
 
-      const filteredAnimals = id ? lookingAnimals.filter(animal => animal.ownerId !== id) : lookingAnimals;
+      const filteredAnimals = id
+        ? lookingAnimals.filter((animal) => animal.ownerId !== id)
+        : lookingAnimals;
 
       return filteredAnimals.map((prismaAnimal) => ({
         id: prismaAnimal.id,
@@ -125,6 +213,7 @@ export const resolvers = {
         owner: {
           id: prismaAnimal.owner.id,
           email: prismaAnimal.owner.email,
+          username: prismaAnimal.owner.username,
           location: prismaAnimal.owner.location
             ? {
                 latitude: prismaAnimal.owner.location.latitude,
@@ -161,6 +250,7 @@ export const resolvers = {
         owner: {
           id: prismaAnimal.owner.id,
           email: prismaAnimal.owner.email,
+          username: prismaAnimal.owner.username,
           location: prismaAnimal.owner.location
             ? {
                 latitude: prismaAnimal.owner.location.latitude,
@@ -178,11 +268,23 @@ export const resolvers = {
       _: unknown,
       args: MutationSignupArgs
     ): Promise<AuthPayload> => {
-      const { email, password, location } = args.input;
+      const { email, password, username, location } = args.input;
 
       // Vérifie si l'utilisateur existe déjà
-      const existingUser = await prisma.user.findUnique({ where: { email } });
-      if (existingUser) throw new Error("Email already used");
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [{ email }, { username }],
+        },
+      });
+
+      if (existingUser) {
+        if (existingUser.email === email) {
+          throw new Error("Email already used");
+        }
+        if (existingUser.username === username) {
+          throw new Error("Username already taken");
+        }
+      }
 
       // Hash du mot de passe
       const hashedPassword = await hashPassword(password);
@@ -193,6 +295,7 @@ export const resolvers = {
           id: randomUUID(),
           email,
           password: hashedPassword,
+          username: username,
           location: location
             ? {
                 create: {
@@ -211,6 +314,7 @@ export const resolvers = {
       const gqlCreatedUser: User = {
         id: prismaUser.id,
         email: prismaUser.email,
+        username: prismaUser.username,
         location: prismaUser.location
           ? {
               latitude: prismaUser.location.latitude,
@@ -246,6 +350,7 @@ export const resolvers = {
       const gqlUser: User = {
         id: prismaUser.id,
         email: prismaUser.email,
+        username: prismaUser.username,
         location: prismaUser.location
           ? {
               latitude: prismaUser.location.latitude,
@@ -296,6 +401,7 @@ export const resolvers = {
         owner: {
           id: prismaUser.id,
           email: prismaUser.email,
+          username: prismaUser.username,
           location: prismaUser.location
             ? {
                 latitude: prismaUser.location.latitude,
@@ -350,6 +456,7 @@ export const resolvers = {
         owner: {
           id: updatedAnimal.owner.id,
           email: updatedAnimal.owner.email,
+          username: updatedAnimal.owner.username,
           location: updatedAnimal.owner.location
             ? {
                 latitude: updatedAnimal.owner.location.latitude,
@@ -395,6 +502,7 @@ export const resolvers = {
         owner: {
           id: deletedAnimal.owner.id,
           email: deletedAnimal.owner.email,
+          username: deletedAnimal.owner.username,
           location: deletedAnimal.owner.location
             ? {
                 latitude: deletedAnimal.owner.location.latitude,

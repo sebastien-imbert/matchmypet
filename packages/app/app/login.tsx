@@ -15,6 +15,7 @@ import {
   AuthPayload,
   MutationLoginArgs,
 } from "../../shared/generated/graphql-types";
+import { client } from "./apollo";
 
 const LOGIN_MUTATION = gql`
   mutation Login($input: LoginInput!) {
@@ -22,6 +23,12 @@ const LOGIN_MUTATION = gql`
       token
       user {
         email
+        id
+        username
+        location {
+          latitude
+          longitude
+        }
       }
     }
   }
@@ -31,10 +38,14 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [login, { loading, error }] = useMutation<
     { login: AuthPayload },
     MutationLoginArgs
-  >(LOGIN_MUTATION);
+  >(LOGIN_MUTATION, {
+    refetchQueries: ["Me"],
+    awaitRefetchQueries: true,
+  });
 
   const handleLogin = async () => {
     try {
@@ -45,6 +56,7 @@ export default function LoginScreen() {
       if (data?.login?.token) {
         await SecureStore.setItemAsync("userToken", data.login.token);
         await SecureStore.setItemAsync("hasOnboarded", "true");
+        await client.resetStore();
         router.replace("/(tabs)");
       }
     } catch (e) {

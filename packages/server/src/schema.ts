@@ -4,6 +4,7 @@ export const typeDefs = gql`
   type User {
     id: ID!
     email: String!
+    username: String!
     location: Location
   }
 
@@ -35,6 +36,13 @@ export const typeDefs = gql`
     createdAt: String!
   }
 
+  type HomeData {
+    me: User
+    myAnimals: [Animal!]!
+    availableAnimals: [Animal!]!
+    lookingAnimals: [Animal!]!
+  }
+
   enum BreedingStatus {
     NONE # Pas proposé / pas encore décidé
     AVAILABLE # Disponible pour saillie (souvent un mâle)
@@ -54,6 +62,7 @@ export const typeDefs = gql`
   input SignupInput {
     email: String!
     password: String!
+    username: String!
     location: LocationInput
   }
 
@@ -89,6 +98,7 @@ export const typeDefs = gql`
 
   type Query {
     me: User
+    homeData: HomeData!
     myAnimals: [Animal!]! # Récupère les animaux de l'utilisateur connecté
     availableAnimals: [Animal!]! # Tous les animaux proposés en saillie
     lookingAnimals: [Animal!]! # Tous ceux qui recherchent un partenaire

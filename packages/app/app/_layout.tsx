@@ -52,6 +52,9 @@ export default function RootLayout() {
     const checkOnboarding = async () => {
       try {
         const value = await SecureStore.getItemAsync("hasOnboarded");
+        const token = await SecureStore.getItemAsync("userToken");
+        console.log("Onboarding status:", value);
+        console.log("User token:", token);
         setHasOnboarded(value === "true");
       } catch (e) {
         console.warn("Erreur lecture SecureStore:", e);
@@ -62,19 +65,12 @@ export default function RootLayout() {
     checkOnboarding();
   }, []);
 
-  useEffect(() => {
-    const deleteOnboardingFlag = async () => {
-      await SecureStore.deleteItemAsync("hasOnboarded");
-    };
-    deleteOnboardingFlag();
-  }, []);
-
   // useEffect(() => {
-  //   const deleteall = async () => {
-  //           await SecureStore.deleteItemAsync("userToken");
-  //           await SecureStore.deleteItemAsync("hasOnboarded");
+  //   const deleteAll = async () => {
+  //     await SecureStore.deleteItemAsync("userToken");
+  //     await SecureStore.deleteItemAsync("hasOnboarded");
   //   };
-  //   deleteall();
+  //   deleteAll();
   // }, []);
 
   if (!loaded || checking) {

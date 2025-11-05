@@ -2,22 +2,10 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { User } from "../../../shared/generated/graphql-types";
-
-const ME = gql`
-  query Me {
-    me {
-      id
-      email
-      location {
-        latitude
-        longitude
-      }
-    }
-  }
-`;
+import { ME } from "@/queries/me";
+import { client } from "../apollo";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -39,6 +27,7 @@ export default function ProfileScreen() {
           try {
             await SecureStore.deleteItemAsync("userToken");
             await SecureStore.deleteItemAsync("hasOnboarded");
+            await client.clearStore();
             router.replace("/onboarding");
           } catch (error) {
             console.error("Erreur lors du logout :", error);
@@ -51,6 +40,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Mon Profil 👤</Text>
+      <Text>Username: {user?.me.username}</Text>
       <Text>Email: {user?.me.email}</Text>
       {user?.me.location && (
         <Text>
