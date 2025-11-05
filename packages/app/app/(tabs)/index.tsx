@@ -5,12 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  Pressable,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { Animal } from "../../../shared/generated/graphql-types";
+import { AnimalCard } from "@/components/AnimalCard";
 
 const MY_ANIMALS_QUERY = gql`
   query MyAnimals {
@@ -21,6 +22,7 @@ const MY_ANIMALS_QUERY = gql`
       age
       sex
       breedingStatus
+      description
     }
   }
 `;
@@ -66,32 +68,16 @@ export default function HomeTab() {
   }
 
   const renderAnimal = ({ item }: { item: Animal }) => (
-    <Pressable onPress={() => router.push(`/animals/${item.id}`)}>
-      <View style={styles.card}>
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>🐾</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.cardDescription}>
-            {item.species} • {item.age} ans • {item.sex}
-          </Text>
-          <Text style={styles.cardDescription}>
-            Statut de reproduction: {item.breedingStatus}
-          </Text>
-        </View>
-      </View>
-    </Pressable>
+    <AnimalCard item={item} />
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Mes animaux</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.header}>Mes animaux 🐾</Text>
       <FlatList
         data={animals}
         keyExtractor={(item) => item.id}
         renderItem={renderAnimal}
-        // contentContainerStyle={{ padding: 20 }}
       />
       <TouchableOpacity
         style={styles.addButton}
@@ -99,7 +85,7 @@ export default function HomeTab() {
       >
         <Text style={styles.addButtonText}>Ajouter un animal</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -108,18 +94,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
     backgroundColor: "#fff",
-  },
-  placeholder: {
-    width: 80,
-    height: 80,
-    backgroundColor: "#eee",
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  placeholderText: {
-    fontSize: 30,
-    textAlign: "center",
-    lineHeight: 80,
   },
   header: {
     fontSize: 28,
@@ -130,41 +104,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#555",
     marginBottom: 20,
-  },
-  card: {
-    backgroundColor: "#f7f7f7",
-    padding: 12,
-    borderRadius: 15,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 3,
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 15,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 12,
-  },
-  cardButton: {
-    backgroundColor: "#000",
-    paddingVertical: 10,
-    borderRadius: 25,
-    alignItems: "center",
-  },
-  cardButtonText: {
-    color: "#fff",
-    fontWeight: "600",
   },
   bottom: {
     marginTop: 30,
@@ -194,11 +133,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 16,
-  },
-  name: {
-    fontWeight: "700",
-    fontSize: 16,
-    marginBottom: 4,
   },
   addButton: {
     backgroundColor: "#000",

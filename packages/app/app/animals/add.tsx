@@ -44,7 +44,7 @@ export default function CreateAnimalScreen() {
     { createAnimal: CreateAnimalInput },
     MutationCreateAnimalArgs
   >(CREATE_ANIMAL, {
-    refetchQueries: ["MyAnimals"], // 👈 nom exact de ta query côté client
+    refetchQueries: ["MyAnimals", "GetAvailableAnimals", "GetLookingAnimals"], // 👈 nom exact de ta query côté client
     awaitRefetchQueries: true,
   });
 
