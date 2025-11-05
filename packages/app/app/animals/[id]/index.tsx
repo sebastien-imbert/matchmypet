@@ -1,8 +1,19 @@
-import { View, Text, StyleSheet, Image, Pressable, Alert, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Pressable,
+  Alert,
+  ScrollView,
+} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { gql} from "@apollo/client";
+import { gql } from "@apollo/client";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { Animal, MutationDeleteAnimalArgs } from "../../../../shared/generated/graphql-types";
+import {
+  Animal,
+  MutationDeleteAnimalArgs,
+} from "../../../../shared/generated/graphql-types";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const GET_ANIMAL = gql`
@@ -31,7 +42,7 @@ const DELETE_ANIMAL = gql`
 
 export default function AnimalDetail() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from: string }>();
 
   const { data, loading, error } = useQuery<{ getAnimal: Animal }>(GET_ANIMAL, {
     variables: { id },
@@ -62,21 +73,17 @@ export default function AnimalDetail() {
   const animal = data.getAnimal;
 
   const handleDelete = (animalId: string) => {
-    Alert.alert(
-      "Supprimer cet animal ?",
-      "Cette action est irréversible.",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: async () => {
-            await deleteAnimal({ variables: { input: { id: animalId } } });
-            router.push("/(tabs)");
-          },
+    Alert.alert("Supprimer cet animal ?", "Cette action est irréversible.", [
+      { text: "Annuler", style: "cancel" },
+      {
+        text: "Supprimer",
+        style: "destructive",
+        onPress: async () => {
+          await deleteAnimal({ variables: { input: { id: animalId } } });
+          router.push("/(tabs)");
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const statusColor =
@@ -88,7 +95,6 @@ export default function AnimalDetail() {
         source={{ uri: "https://placecats.com/600/400" }}
         style={styles.image}
       />
-
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <Text style={styles.name}>{animal.name}</Text>
@@ -116,7 +122,11 @@ export default function AnimalDetail() {
         )}
 
         <View style={styles.metaRow}>
-          <MaterialCommunityIcons name="gender-male-female" size={18} color="#666" />
+          <MaterialCommunityIcons
+            name="gender-male-female"
+            size={18}
+            color="#666"
+          />
           <Text style={styles.meta}>{animal.sex}</Text>
         </View>
 
@@ -129,26 +139,28 @@ export default function AnimalDetail() {
           Ajouté le {new Date(animal.createdAt).toLocaleDateString()}
         </Text>
 
-        <View style={styles.buttonsRow}>
-          <Pressable
-            style={[styles.button, styles.editButton]}
-            onPress={() => router.push(`/animals/${animal.id}/edit`)}
-          >
-            <MaterialCommunityIcons name="pencil" size={18} color="#fff" />
-            <Text style={styles.buttonText}>Modifier</Text>
-          </Pressable>
+        {from === "default" && (
+          <View style={styles.buttonsRow}>
+            <Pressable
+              style={[styles.button, styles.editButton]}
+              onPress={() => router.push(`/animals/${animal.id}/edit`)}
+            >
+              <MaterialCommunityIcons name="pencil" size={18} color="#fff" />
+              <Text style={styles.buttonText}>Modifier</Text>
+            </Pressable>
 
-          <Pressable
-            style={[styles.button, styles.deleteButton]}
-            onPress={() => handleDelete(animal.id)}
-            disabled={isDeleting}
-          >
-            <MaterialCommunityIcons name="trash-can" size={18} color="#fff" />
-            <Text style={styles.buttonText}>
-              {isDeleting ? "Suppression..." : "Supprimer"}
-            </Text>
-          </Pressable>
-        </View>
+            <Pressable
+              style={[styles.button, styles.deleteButton]}
+              onPress={() => handleDelete(animal.id)}
+              disabled={isDeleting}
+            >
+              <MaterialCommunityIcons name="trash-can" size={18} color="#fff" />
+              <Text style={styles.buttonText}>
+                {isDeleting ? "Suppression..." : "Supprimer"}
+              </Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
